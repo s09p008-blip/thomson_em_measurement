@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>トムソンの実験シミュレーション</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #2d3748;
+        }
+
+        h1 {
+            color: #f7fafc;
+            font-size: 24px;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
+        }
+
+        .sub-title {
+            color: #e2e8f0;
+            margin-bottom: 18px;
+            font-size: 14px;
+        }
+
+        .app-shell {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(247, 250, 252, 0.98);
+            border-radius: 16px;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+            padding: 16px;
+        }
+
+        .top-layout {
+            display: flex;
+            gap: 12px;
+        }
+
+        .left-pane {
+            flex: 3;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .right-pane {
+            flex: 1.5;
+            background: #ffffff;
+            border-radius: 14px;
+            padding: 12px;
+            box-shadow: inset 0 0 0 1px rgba(203, 213, 224, 0.9);
+            height: 100%;
+        }
+
+        #canvas-container {
+            background: radial-gradient(circle at top left, #edf2ff 0%, #e2e8f0 45%, #cbd5e0 100%);
+            border-radius: 14px;
+            padding: 12px 16px 14px 16px;
+            box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.5);
+        }
+
+        #canvas-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 6px;
+        }
+
+        #canvas-header h2 {
+            font-size: 16px;
+            color: #2d3748;
+        }
+
+        #canvas-header span {
+            font-size: 11px;
+            color: #4a5568;
+        }
+
+        canvas {
+            border-radius: 10px;
+            background: radial-gradient(circle at 50% 50%, #1a202c 0%, #111827 45%, #020617 100%);
+            border: 1px solid rgba(15, 23, 42, 0.8);
+            width: 100%;
+            height: 420px;
+            display: block;
+        }
+
+        #hint {
+            font-size: 11px;
+            color: #4a5568;
+            margin-top: 6px;
+        }
+
+        #controls-bottom {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .panel-section {
+            flex: 1;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .panel-section h2 {
+            color: #2d3748;
+            font-size: 14px;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .panel-section h2::before {
+            content: '';
+            width: 5px;
+            height: 5px;
+            border-radius: 999px;
+            background: #667eea;
+            display: inline-block;
+        }
+
+        .control-group {
+            margin-bottom: 8px;
+        }
+
+        label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #4a5568;
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+        }
+
+        .value-display {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #4a5568;
+        }
+
+        select {
+            width: 100%;
+            padding: 5px 8px;
+            font-size: 12px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e0;
+            background: #ffffff;
+        }
+
+        .button-row {
+            margin-top: 4px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 12px;
+            border-radius: 999px;
+            border: none;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .button-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.5);
+        }
+
+        .button-secondary {
+            background: #e2e8f0;
+            color: #2d3748;
+        }
+
+        .small-note {
+            font-size: 10px;
+            color: #718096;
+        }
+
+        .right-pane h2 {
+            font-size: 15px;
+            margin-bottom: 8px;
+            color: #2d3748;
+        }
+
+        .measurement-box {
+            background: #fff;
+            border-radius: 10px;
+            padding: 10px;
+            box-shadow: inset 0 0 0 1px rgba(203, 213, 224, 0.8);
+            margin-bottom: 8px;
+        }
+
+        .measurement-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .measurement-label {
+            color: #4a5568;
+        }
+
+        .measurement-value {
+            font-weight: 600;
+            color: #1a202c;
+        }
+
+        .measurement-value.highlight {
+            color: #d53f8c;
+        }
+
+        .info-box {
+            margin-top: 6px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            background: #ebf4ff;
+            font-size: 11px;
+            color: #2a4365;
+        }
+
+        /* タブレット・スマホ向け調整 */
+        @media (max-width: 900px) {
+            .top-layout {
+                flex-direction: column;
+            }
+            .right-pane {
+                margin-top: 10px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+            }
+            .app-shell {
+                padding: 10px;
+            }
+            canvas {
+                height: 340px;
+            }
+            #controls-bottom {
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 20px;
+            }
+            .sub-title {
+                font-size: 12px;
+            }
+            canvas {
+                height: 280px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>トムソンの実験シミュレーション（比電荷 e/m 測定）</h1>
+    <p class="sub-title">
+        電場と磁場の強さを変え、陰極線を発射してスクリーン上の位置を測定しよう。<br>
+        表示されたデータから、自分で比電荷 e/m を計算できます。
+    </p>
+
+    <div class="app-shell">
+        <div class="top-layout">
+            <!-- 左：図 + 下に操作パネル -->
+            <div class="left-pane">
+                <div id="canvas-container">
+                    <div id="canvas-header">
+                        <h2>トムソンの装置（模式図）</h2>
+                        <span>陰極線が平行平板電極のあいだを通り、右のスクリーンに当たる。</span>
+                    </div>
+                    <canvas id="simulationCanvas"></canvas>
+                    <div id="hint">
+                        ※ 条件を変えた後は「陰極線を発射」ボタンを押すと、新しい条件で陰極線が進みます。
+                    </div>
+                </div>
+
+                <!-- 図の下：電位差・磁場・実験条件 + 発射ボタン -->
+                <div id="controls-bottom">
+                    <div class="panel-section">
+                        <h2>⚡ 電位差と磁場</h2>
+                        <div class="control-group">
+                            <label for="plateVoltage">極板間の電位差 V</label>
+                            <input type="range" id="plateVoltage" min="0" max="100" value="0" step="1">
+                            <div class="value-display">
+                                <span>0 V</span>
+                                <span id="voltageValue">0 V</span>
+                                <span>100 V</span>
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <label for="magneticField">磁場 B (μT)</label>
+                            <input type="range" id="magneticField" min="0" max="1000" value="0" step="10">
+                            <div class="value-display">
+                                <span>0</span>
+                                <span id="bFieldValue">0 μT</span>
+                                <span>1000</span>
+                            </div>
+                        </div>
+                        <!-- 説明文は削除 -->
+                    </div>
+
+                    <div class="panel-section">
+                        <h2>🔧 実験条件</h2>
+                        <div class="control-group">
+                            <label for="cathode">陰極の材料</label>
+                            <select id="cathode">
+                                <option value="Cu">銅 (Cu)</option>
+                                <option value="W">タングステン (W)</option>
+                                <option value="BaO">酸化バリウム (BaO)</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label for="gas">真空管内の気体</label>
+                            <select id="gas">
+                                <option value="vacuum">高真空</option>
+                                <option value="Ne">ネオン (Ne)</option>
+                                <option value="Ar">アルゴン (Ar)</option>
+                            </select>
+                        </div>
+                        <div class="button-row">
+                            <button class="button button-primary" id="fireButton">🔵 陰極線を発射</button>
+                            <button class="button button-secondary" id="resetButton">🔄 リセット</button>
+                        </div>
+                        <div class="small-note">
+                            条件を変えるといったんビームは消えます。もう一度「陰極線を発射」を押してください。
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右：測定結果 -->
+            <div class="right-pane">
+                <h2>📊 測定結果（比電荷計算用データ）</h2>
+                <div class="measurement-box">
+                    <div class="measurement-item">
+                        <span class="measurement-label">極板間の電位差 V</span>
+                        <span class="measurement-value" id="voltageDisplay">0 V</span>
+                    </div>
+                    <div class="measurement-item">
+                        <span class="measurement-label">電場の強さ E = V/d</span>
+                        <span class="measurement-value" id="eFieldDisplay">0 V/m</span>
+                    </div>
+                    <div class="measurement-item">
+                        <span class="measurement-label">磁場の強さ B</span>
+                        <span class="measurement-value" id="bDisplay">0 μT</span>
+                    </div>
+                    <div class="measurement-item">
+                        <span class="measurement-label">極板間の距離 d</span>
+                        <span class="measurement-value" id="dDisplay">4.0 cm</span>
+                    </div>
+                    <div class="measurement-item">
+                        <span class="measurement-label">電場領域の長さ l</span>
+                        <span class="measurement-value" id="lDisplay">5.0 cm</span>
+                    </div>
+                    <div class="measurement-item">
+                        <span class="measurement-label">電場中心からスクリーンまで L</span>
+                        <span class="measurement-value" id="LDisplay">12.0 cm</span>
+                    </div>
+                    <div class="measurement-item">
+                        <span class="measurement-label">電子の速さ v</span>
+                        <span class="measurement-value" id="vDisplay">5.0 × 10⁶ m/s</span>
+                    </div>
+                    <div class="measurement-item">
+                        <span class="measurement-label">スクリーンでのずれ y</span>
+                        <span class="measurement-value highlight" id="deflectionDisplay">0.00 cm</span>
+                    </div>
+                </div>
+                <div class="info-box">
+                    表の値を使って、例えば<br>
+                    <strong>e/m = v² y / (E · l · L)</strong><br>
+                    などの式で比電荷 e/m を自分で計算してみましょう。
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== キャンバス設定 =====
+        const canvas = document.getElementById('simulationCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let SCALE = 50;
+        let ORIGIN_X = 0;
+        let ORIGIN_Y = 0;
+
+        function updateScale() {
+            SCALE = Math.min(canvas.width / 25, canvas.height / 20);
+            ORIGIN_X = canvas.width * 0.15;
+            ORIGIN_Y = canvas.height * 0.5;
+        }
+
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            const rect = container.getBoundingClientRect();
+            canvas.width = rect.width - 30;
+            canvas.height = rect.height - 60;
+            updateScale();
+        }
+
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+            draw();
+        });
+
+        // ===== 物理定数・装置寸法 =====
+        const PHYS = {
+            eOverM: 1.758820e11,      // 電子の比電荷 [C/kg]
+            electronSpeed: 5.0e6,     // 電子の速さ v [m/s]
+            d_cm: 4.0,                // 極板間距離 d [cm]（さらに広く）
+            l_cm: 5.0,                // 電場領域の長さ l [cm]
+            L_cm: 12.0,               // 電場中心からスクリーンまで L [cm]
+            cathodeToFieldEntry_cm: 4.0, // 陰極→電場入口 [cm]
+            maxVoltage: 100           // 最大電圧 [V]
+        };
+
+        const MAX_E = PHYS.maxVoltage / (PHYS.d_cm / 100.0); // [V/m]
+
+        // ===== 状態 =====
+        const state = {
+            voltage: 0,
+            magneticFieldMicroT: 0,
+            deflection_cm: 0,
+            currentE: 0
+        };
+
+        let rayPath = [];
+        let hitPoint = null;
+        let beamVisible = false;
+        let isShooting = false;
+        let shotIndex = 0;
+
+        const voltageSlider = document.getElementById('plateVoltage');
+        const bSlider = document.getElementById('magneticField');
+        const fireButton = document.getElementById('fireButton');
+        const resetButton = document.getElementById('resetButton');
+        const cathodeSelect = document.getElementById('cathode');
+        const gasSelect = document.getElementById('gas');
+
+        // ===== 軌道と測定値の計算 =====
+        function computeRayAndMeasurement() {
+            const d_m = PHYS.d_cm / 100.0;
+            const l_m = PHYS.l_cm / 100.0;
+            const L_m = PHYS.L_cm / 100.0;
+            const v = PHYS.electronSpeed;
+            const eOverM = PHYS.eOverM;
+
+            const V = state.voltage;
+            const E = V / d_m;              // [V/m]
+            state.currentE = E;
+            const B_T = state.magneticFieldMicroT * 1e-6; // [T]
+
+            const E_effective = E - v * B_T;
+            let a = eOverM * E_effective;   // [m/s^2]
+            if (Math.abs(E_effective) < 1e-3) a = 0;
+
+            const finalY_cm = buildRayPath(a, l_m, L_m, v);
+            state.deflection_cm = finalY_cm;
+
+            document.getElementById('voltageDisplay').textContent =
+                V.toFixed(0) + ' V';
+            document.getElementById('eFieldDisplay').textContent =
+                E.toFixed(0) + ' V/m';
+            document.getElementById('bDisplay').textContent =
+                state.magneticFieldMicroT.toFixed(0) + ' μT';
+            document.getElementById('dDisplay').textContent =
+                PHYS.d_cm.toFixed(1) + ' cm';
+            document.getElementById('lDisplay').textContent =
+                PHYS.l_cm.toFixed(1) + ' cm';
+            document.getElementById('LDisplay').textContent =
+                PHYS.L_cm.toFixed(1) + ' cm';
+            document.getElementById('vDisplay').textContent =
+                (v / 1e6).toFixed(1) + ' × 10⁶ m/s';
+            document.getElementById('deflectionDisplay').textContent =
+                finalY_cm.toFixed(2) + ' cm';
+        }
+
+        function buildRayPath(a, l_m, L_m, v) {
+            rayPath = [];
+            hitPoint = null;
+
+            const entry_x_cm = PHYS.cathodeToFieldEntry_cm;
+            const gun_x_cm = 0;
+
+            // 陰極 → 電場入口
+            const N_pre = 20;
+            for (let i = 0; i <= N_pre; i++) {
+                const t = i / N_pre;
+                const x_cm = gun_x_cm + t * (entry_x_cm - gun_x_cm);
+                const y_cm = 0;
+                rayPath.push({ x_cm, y_cm });
+            }
+
+            const N1 = 60;
+            const dz = (PHYS.l_cm / 100.0) / N1;
+            const d_cm = PHYS.d_cm;
+            const y_limit_cm = d_cm / 2 - 0.1;
+
+            // 電場領域内
+            if (a === 0) {
+                for (let i = 0; i <= N1; i++) {
+                    const z = dz * i;
+                    const x_cm = entry_x_cm + z * 100.0;
+                    const y_cm = 0;
+                    rayPath.push({ x_cm, y_cm });
+                }
+            } else {
+                for (let i = 0; i <= N1; i++) {
+                    const z = dz * i;
+                    const t = z / v;
+                    let y_m = 0.5 * a * t * t;
+                    let y_cm = y_m * 100.0;
+
+                    if (y_cm > y_limit_cm) y_cm = y_limit_cm;
+                    if (y_cm < -y_limit_cm) y_cm = -y_limit_cm;
+
+                    const x_cm = entry_x_cm + z * 100.0;
+                    rayPath.push({ x_cm, y_cm });
+                }
+            }
+
+            // 出口の状態
+            const t1 = (PHYS.l_cm / 100.0) / v;
+            let y_exit_m = 0.5 * a * t1 * t1;
+            let vy_exit = a * t1;
+
+            let y_exit_cm = y_exit_m * 100.0;
+            if (y_exit_cm > y_limit_cm) y_exit_cm = y_limit_cm;
+            if (y_exit_cm < -y_limit_cm) y_exit_cm = -y_limit_cm;
+
+            // 出口 → スクリーン
+            const s_max = L_m - (PHYS.l_cm / 100.0) / 2.0;
+            const N2 = 60;
+            const ds = s_max / N2;
+            const x_exit_cm = entry_x_cm + (PHYS.l_cm) * 1.0;
+            let finalY_cm = 0;
+
+            for (let i = 1; i <= N2; i++) {
+                const s = ds * i;
+                const t = s / v;
+                let y_m = y_exit_m + vy_exit * t;
+                let y_cm = y_m * 100.0;
+
+                const x_cm = x_exit_cm + s * 100.0;
+                rayPath.push({ x_cm, y_cm });
+
+                if (i === N2) {
+                    finalY_cm = y_cm;
+                    hitPoint = { x_cm, y_cm };
+                }
+            }
+
+            return finalY_cm;
+        }
+
+        // ===== 矢印描画 =====
+        function drawArrow(x1, y1, x2, y2, color, label) {
+            const angle = Math.atan2(y2 - y1, x2 - x1);
+            const headLength = 10;
+
+            ctx.strokeStyle = color;
+            ctx.fillStyle = color;
+            ctx.lineWidth = 2;
+
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(x2, y2);
+            ctx.lineTo(
+                x2 - headLength * Math.cos(angle - Math.PI / 6),
+                y2 - headLength * Math.sin(angle - Math.PI / 6)
+            );
+            ctx.lineTo(
+                x2 - headLength * Math.cos(angle + Math.PI / 6),
+                y2 - headLength * Math.sin(angle + Math.PI / 6)
+            );
+            ctx.closePath();
+            ctx.fill();
+
+            if (label) {
+                ctx.font = 'bold 14px sans-serif';
+                ctx.fillText(label, x2 + 15, y2 + 5);
+            }
+        }
+
+        // ===== 描画 =====
+        function draw() {
+            ctx.fillStyle = '#f7fafc';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const FIELD_START_X_CM = PHYS.cathodeToFieldEntry_cm;
+            const FIELD_END_X_CM = FIELD_START_X_CM + PHYS.l_cm;
+            const plateX1 = ORIGIN_X + FIELD_START_X_CM * SCALE;
+            const plateX2 = ORIGIN_X + FIELD_END_X_CM * SCALE;
+            const plateY1 = ORIGIN_Y - (PHYS.d_cm / 2) * SCALE;
+            const plateY2 = ORIGIN_Y + (PHYS.d_cm / 2) * SCALE;
+
+            // 陰極
+            ctx.fillStyle = '#4a5568';
+            ctx.fillRect(ORIGIN_X - 20, ORIGIN_Y - 30, 15, 60);
+            ctx.fillStyle = '#2d3748';
+            ctx.font = '12px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('陰極', ORIGIN_X - 12, ORIGIN_Y + 50);
+
+            // 平行平板（上＋下）
+            ctx.fillStyle = '#e53e3e';
+            ctx.fillRect(plateX1, plateY1 - 10, (plateX2 - plateX1), 10);
+            ctx.fillStyle = '#c53030';
+            ctx.font = '14px sans-serif';
+            ctx.fillText('+', plateX1 + (plateX2 - plateX1) / 2, plateY1 - 15);
+
+            ctx.fillStyle = '#3182ce';
+            ctx.fillRect(plateX1, plateY2, (plateX2 - plateX1), 10);
+            ctx.fillStyle = '#2c5282';
+            ctx.fillText('−', plateX1 + (plateX2 - plateX1) / 2, plateY2 + 25);
+
+            // 電場矢印
+            if (state.currentE > 0) {
+                const strengthRatio = Math.min(state.currentE / MAX_E, 1);
+                const minArrows = 3;
+                const maxArrows = 10;
+                const arrowCount = Math.max(
+                    minArrows,
+                    Math.round(minArrows + strengthRatio * (maxArrows - minArrows))
+                );
+                for (let i = 0; i < arrowCount; i++) {
+                    const t = (i + 1) / (arrowCount + 1);
+                    const x = plateX1 + t * (plateX2 - plateX1);
+                    drawArrow(x, plateY1 + 5, x, plateY2 - 5, '#e53e3e', i === 0 ? 'E' : '');
+                }
+            }
+
+            // 磁場領域
+            if (state.magneticFieldMicroT > 0) {
+                ctx.fillStyle = 'rgba(56, 161, 105, 0.08)';
+                ctx.fillRect(plateX1, plateY1 + 10, plateX2 - plateX1, plateY2 - plateY1 - 20);
+
+                const strengthRatioB = Math.min(state.magneticFieldMicroT / 1000.0, 1);
+                const maxMarks = 8;
+                const markCount = Math.max(1, Math.round(strengthRatioB * maxMarks));
+
+                ctx.strokeStyle = '#38a169';
+                ctx.lineWidth = 2;
+
+                for (let i = 0; i < markCount; i++) {
+                    const t = (i + 1) / (markCount + 1);
+                    const bx = plateX1 + t * (plateX2 - plateX1);
+                    const by = ORIGIN_Y;
+                    ctx.beginPath();
+                    ctx.arc(bx, by, 6, 0, Math.PI * 2);
+                    ctx.stroke();
+
+                    // ⊗ マーク
+                    ctx.beginPath();
+                    ctx.moveTo(bx - 4, by - 4);
+                    ctx.lineTo(bx + 4, by + 4);
+                    ctx.moveTo(bx + 4, by - 4);
+                    ctx.lineTo(bx - 4, by + 4);
+                    ctx.stroke();
+                }
+
+                ctx.fillStyle = '#38a169';
+                ctx.font = '12px sans-serif';
+                ctx.textAlign = 'left';
+                ctx.fillText('B (⊗)', plateX1 + 5, plateY1 + 25);
+            }
+
+            // スクリーン
+            const screenX_cm = FIELD_START_X_CM + PHYS.l_cm / 2 + PHYS.L_cm;
+            const screenX = ORIGIN_X + screenX_cm * SCALE;
+            ctx.strokeStyle = '#4a5568';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(screenX, ORIGIN_Y - 160);
+            ctx.lineTo(screenX, ORIGIN_Y + 160);
+            ctx.stroke();
+            ctx.fillStyle = '#2d3748';
+            ctx.font = '12px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('スクリーン', screenX, ORIGIN_Y + 178);
+
+            // 基準直線
+            ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(ORIGIN_X, ORIGIN_Y);
+            ctx.lineTo(screenX, ORIGIN_Y);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // 陰極線
+            if (beamVisible && rayPath.length > 1) {
+                const maxIdx = isShooting
+                    ? Math.min(Math.floor(shotIndex), rayPath.length - 1)
+                    : rayPath.length - 1;
+
+                if (maxIdx > 0) {
+                    ctx.beginPath();
+                    for (let i = 0; i <= maxIdx; i++) {
+                        const p = rayPath[i];
+                        const px = ORIGIN_X + p.x_cm * SCALE;
+                        const py = ORIGIN_Y - p.y_cm * SCALE;
+                        if (i === 0) ctx.moveTo(px, py);
+                        else ctx.lineTo(px, py);
+                    }
+                    ctx.strokeStyle = '#667eea';
+                    ctx.lineWidth = 3;
+                    ctx.shadowColor = 'rgba(102, 126, 234, 0.7)';
+                    ctx.shadowBlur = 8;
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+                }
+
+                if (!isShooting && hitPoint) {
+                    const hx = ORIGIN_X + hitPoint.x_cm * SCALE;
+                    const hy = ORIGIN_Y - hitPoint.y_cm * SCALE;
+
+                    const gradient = ctx.createRadialGradient(hx, hy, 0, hx, hy, 14);
+                    gradient.addColorStop(0, 'rgba(237, 100, 166, 1)');
+                    gradient.addColorStop(0.6, 'rgba(237, 100, 166, 0.4)');
+                    gradient.addColorStop(1, 'rgba(237, 100, 166, 0)');
+                    ctx.beginPath();
+                    ctx.arc(hx, hy, 14, 0, Math.PI * 2);
+                    ctx.fillStyle = gradient;
+                    ctx.fill();
+
+                    ctx.beginPath();
+                    ctx.arc(hx, hy, 4, 0, Math.PI * 2);
+                    ctx.fillStyle = '#ed64a6';
+                    ctx.fill();
+                }
+            }
+
+            ctx.fillStyle = '#2d3748';
+            ctx.font = '13px sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText(
+                'd = ' + PHYS.d_cm.toFixed(1) + ' cm,  l = ' +
+                PHYS.l_cm.toFixed(1) + ' cm,  L = ' +
+                PHYS.L_cm.toFixed(1) + ' cm',
+                20, canvas.height - 40
+            );
+            ctx.fillText(
+                'V = ' + state.voltage.toFixed(0) + ' V,  B = ' +
+                state.magneticFieldMicroT.toFixed(0) + ' μT',
+                20, canvas.height - 20
+            );
+        }
+
+        // ===== アニメーション =====
+        function animate() {
+            if (isShooting) {
+                shotIndex += 2;
+                if (shotIndex >= rayPath.length - 1) {
+                    isShooting = false;
+                    shotIndex = rayPath.length - 1;
+                }
+            }
+            draw();
+            requestAnimationFrame(animate);
+        }
+
+        // 実験条件変更時：電位差と磁場をリセット
+        function resetFieldsOnConditionChange() {
+            state.voltage = 0;
+            state.magneticFieldMicroT = 0;
+            voltageSlider.value = 0;
+            bSlider.value = 0;
+            document.getElementById('voltageValue').textContent = '0 V';
+            document.getElementById('bFieldValue').textContent = '0 μT';
+            beamVisible = false;
+            isShooting = false;
+            computeRayAndMeasurement();
+        }
+
+        // ===== コントロール初期化 =====
+        function initControls() {
+            voltageSlider.addEventListener('input', () => {
+                state.voltage = parseFloat(voltageSlider.value);
+                document.getElementById('voltageValue').textContent =
+                    state.voltage.toFixed(0) + ' V';
+                computeRayAndMeasurement();
+                beamVisible = false;
+                isShooting = false;
+            });
+
+            bSlider.addEventListener('input', () => {
+                state.magneticFieldMicroT = parseFloat(bSlider.value);
+                document.getElementById('bFieldValue').textContent =
+                    state.magneticFieldMicroT.toFixed(0) + ' μT';
+                computeRayAndMeasurement();
+                beamVisible = false;
+                isShooting = false;
+            });
+
+            fireButton.addEventListener('click', () => {
+                computeRayAndMeasurement();
+                beamVisible = true;
+                isShooting = true;
+                shotIndex = 0;
+            });
+
+            resetButton.addEventListener('click', () => {
+                state.voltage = 0;
+                state.magneticFieldMicroT = 0;
+                voltageSlider.value = 0;
+                bSlider.value = 0;
+                document.getElementById('voltageValue').textContent = '0 V';
+                document.getElementById('bFieldValue').textContent = '0 μT';
+                beamVisible = false;
+                isShooting = false;
+                computeRayAndMeasurement();
+            });
+
+            cathodeSelect.addEventListener('change', resetFieldsOnConditionChange);
+            gasSelect.addEventListener('change', resetFieldsOnConditionChange);
+        }
+
+        // ===== 初期化 =====
+        function init() {
+            resizeCanvas();
+            initControls();
+
+            voltageSlider.value = state.voltage;
+            bSlider.value = state.magneticFieldMicroT;
+            document.getElementById('voltageValue').textContent = '0 V';
+            document.getElementById('bFieldValue').textContent = '0 μT';
+
+            computeRayAndMeasurement();
+            animate();
+        }
+
+        init();
+    </script>
+</body>
+</html>
